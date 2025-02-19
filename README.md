@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Halifax Weather Data Collector
 
 This script collects weather data for Halifax for the past 3 days and stores it in a CSV file. The data is updated daily at midnight.
@@ -34,3 +35,7 @@ The CSV file contains the following information for each day:
 - Precipitation
 - Wind speed
 - Weather conditions
+=======
+# halifax-weather
+Daily Halifax weather data collection using GitHub Actions
+>>>>>>> df933971f819b6165478964a7587152583b3be46
