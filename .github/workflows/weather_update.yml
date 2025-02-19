@@ -10,9 +10,10 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - uses: actions/checkout@v2
+    - name: Checkout repository
+      uses: actions/checkout@v2
       with:
-        fetch-depth: 0  # 获取完整历史以便进行提交
+        fetch-depth: 0
         
     - name: Set up Python
       uses: actions/setup-python@v2
@@ -27,11 +28,27 @@ jobs:
     - name: Run weather update script
       env:
         WEATHER_API_KEY: ${{ secrets.WEATHERAPIKEY }}
-      run: python halifax_weather.py
-      
-    - name: Commit and push if changed
       run: |
-        git config --global user.email "github-actions@github.com"
-        git config --global user.name "GitHub Actions"
+        echo "Starting weather update script..."
+        python halifax_weather.py
+        echo "Weather update script completed."
+        
+    - name: Configure Git
+      run: |
+        git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git config --global user.name "github-actions[bot]"
+        
+    - name: Commit and push changes
+      run: |
+        echo "Checking for changes..."
+        git status
         git add halifax_weather.csv
-        git diff --quiet && git diff --staged --quiet || (git commit -m "Update weather data [skip ci]" && git push)
+        git status
+        if git diff --staged --quiet; then
+          echo "No changes to commit"
+        else
+          echo "Committing changes..."
+          git commit -m "Update weather data [skip ci]"
+          echo "Pushing changes..."
+          git push
+        fi
