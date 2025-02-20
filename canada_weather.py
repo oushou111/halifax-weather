@@ -18,7 +18,7 @@ def get_weather_data(city):
     """获取指定城市的天气数据"""
     try:
         # WeatherAPI.com API
-        api_key = os.getenv('WEATHER_API_KEY', '6e7f288838454892a5e215301252002')  # 使用环境变量或默认值
+        api_key = os.getenv('WEATHER_API_KEY', '6e7f288838454892a5e215301252002')
         base_url = "http://api.weatherapi.com/v1/current.json"
         
         # 构建API URL - 使用quote()进行URL编码
