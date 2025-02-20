@@ -3,6 +3,7 @@ import requests
 from datetime import datetime, timedelta
 import os
 from supabase import create_client
+import time
 
 # Supabase configuration
 SUPABASE_URL = os.getenv('SUPABASE_URL', 'https://mrmlhepxjdsxcvvyyolb.supabase.co')
@@ -43,6 +44,13 @@ def get_weather_data(city):
         
         # 发送请求
         response = requests.get(url)
+        
+        # 如果遇到429错误，等待一分钟后重试
+        if response.status_code == 429:
+            print(f"API请求过于频繁，等待60秒后重试...")
+            time.sleep(60)
+            response = requests.get(url)
+        
         response.raise_for_status()
         
         # 解析返回的JSON数据
@@ -65,6 +73,10 @@ def get_weather_data(city):
             weather_data_list.append(weather_data)
         
         print(f"成功获取{city}的天气数据")
+        
+        # 在请求之间添加延迟
+        time.sleep(2)
+        
         return weather_data_list
     
     except Exception as e:
@@ -101,6 +113,10 @@ def save_to_supabase(df):
         # 将DataFrame转换为字典列表
         records = df.to_dict('records')
         
+        # 转换日期格式
+        for record in records:
+            record['date'] = pd.to_datetime(record['date']).strftime('%Y-%m-%d')
+        
         # 使用upsert来更新或插入数据
         result = supabase.table('weather_data').upsert(
             records,
@@ -133,10 +149,7 @@ def main():
         save_to_csv(df)
         
         # 保存到Supabase
-        if SUPABASE_URL != "YOUR_SUPABASE_URL" and SUPABASE_KEY != "YOUR_SUPABASE_KEY":
-            save_to_supabase(df)
-        else:
-            print("\n请设置Supabase的URL和Key以启用数据库存储")
+        save_to_supabase(df)
     else:
         print("没有获取到任何天气数据")
 
