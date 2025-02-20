@@ -2,24 +2,21 @@ name: Daily Weather Update
 
 on:
   schedule:
-    - cron: '0 4 * * *'  # 运行于每天UTC 4:00 (相当于Halifax时间午夜0:00)
+    - cron: '0 */6 * * *'  # 每6小时运行一次
   workflow_dispatch:  # 允许手动触发
 
 jobs:
   update-weather:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     
     steps:
-    - uses: actions/checkout@v3
-      with:
-        fetch-depth: 0
+    - name: Checkout repository
+      uses: actions/checkout@v3
     
-    - uses: actions/setup-python@v4
+    - name: Set up Python
+      uses: actions/setup-python@v4
       with:
         python-version: '3.9'
-        cache: 'pip'
     
     - name: Install dependencies
       run: |
@@ -29,12 +26,16 @@ jobs:
     - name: Run weather update script
       env:
         WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY }}
-      run: python canada_weather.py
-    
-    - name: Commit changes
       run: |
-        git config --global user.name github-actions
-        git config --global user.email github-actions@github.com
-        git pull origin main --rebase
+        python canada_weather.py
+    
+    - name: Configure Git
+      run: |
+        git config --global user.name 'github-actions[bot]'
+        git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+    
+    - name: Commit and push if changed
+      run: |
         git add canada_weather.csv
-        git diff --quiet && git diff --staged --quiet || (git commit -m "Update weather data" && git push)
+        git diff --staged --quiet || git commit -m "Update weather data"
+        git push
