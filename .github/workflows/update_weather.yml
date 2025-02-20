@@ -1,34 +1,83 @@
-name: Update Weather Data
+name: Daily Weather Update
 
 on:
   schedule:
-    - cron: '0 12 * * *'  # 每天UTC 12:00运行（约当地时间早上8点）
+    - cron: '0 4 * * *'  # 运行于每天UTC 4:00 (相当于Halifax时间午夜0:00)
   workflow_dispatch:  # 允许手动触发
+
+permissions:
+  contents: write  # 添加写入权限
 
 jobs:
   update-weather:
     runs-on: ubuntu-latest
     
     steps:
-    - uses: actions/checkout@v2
-    
+    - name: Checkout repository
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
+        
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
-        python-version: '3.x'
-    
+        python-version: '3.9'
+        
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install pandas requests
-    
-    - name: Update weather data
+        
+    - name: Run weather update script
       run: |
+        echo "Starting weather update script..."
         python canada_weather.py
-    
-    - name: Commit and push if changed
+        echo "Weather update script completed."
+        
+    - name: Configure Git
       run: |
-        git config --global user.name 'GitHub Action'
-        git config --global user.email 'action@github.com'
+        git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git config --global user.name "github-actions[bot]"
+        
+    - name: Commit and push changes
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        echo "Checking for changes..."
+        git status
         git add canada_weather.csv
-        git diff --quiet && git diff --staged --quiet || (git commit -m "Update weather data $(date +'%Y-%m-%d')" && git push)
+        git status
+        if git diff --staged --quiet; then
+          echo "No changes to commit"
+        else
+          echo "Committing changes..."
+          git commit -m "Update weather data [skip ci]"
+          echo "Pushing changes..."
+          git push https://${GITHUB_TOKEN}@github.com/oushou111/halifax-weather.git HEAD:main
+        fi
+    
+    - name: Check last commit time
+      id: check_commits
+      run: |
+        LAST_COMMIT_TIME=$(git log -1 --format=%ct)
+        CURRENT_TIME=$(date +%s)
+        TIME_DIFF=$((CURRENT_TIME - LAST_COMMIT_TIME))
+        # 如果超过24小时没有更新，设置一个输出变量
+        if [ $TIME_DIFF -gt 86400 ]; then
+          echo "::set-output name=needs_alert::true"
+        fi
+    
+    - name: Create issue if update failed
+      if: failure() || steps.check_commits.outputs.needs_alert == 'true'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const title = "Weather Data Update Alert";
+          const body = `Weather data update needs attention!\n\nTime: ${new Date().toISOString()}\n\nPlease check the workflow logs for more details.`;
+          await github.rest.issues.create({
+            owner: context.repo.owner,
+            repo: context.repo.name,
+            title: title,
+            body: body
+          });
