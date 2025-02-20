@@ -15,12 +15,7 @@ CITIES = [
     'Montreal,Quebec,Canada',
     'Vancouver,British Columbia,Canada',
     'Calgary,Alberta,Canada',
-    'Edmonton,Alberta,Canada',
-    'Ottawa,Ontario,Canada',
-    'Winnipeg,Manitoba,Canada',
-    'Quebec City,Quebec,Canada',
-    'Halifax,Nova Scotia,Canada',
-    'Victoria,British Columbia,Canada'
+    'Halifax,Nova Scotia,Canada'
 ]
 
 def get_weather_data(city):
