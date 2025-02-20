@@ -1,6 +1,6 @@
 import pandas as pd
 import requests
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
 
 # 加拿大主要城市列表
@@ -24,11 +24,16 @@ def get_weather_data(city):
         api_key = "MDC6EHP7JWGVFNRXN7KYS3BA7"
         base_url = "https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline"
         
-        # 获取今天的日期
-        today = datetime.now().strftime('%Y-%m-%d')
+        # 获取日期范围
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=3)
+        
+        # 格式化日期
+        start_date_str = start_date.strftime('%Y-%m-%d')
+        end_date_str = end_date.strftime('%Y-%m-%d')
         
         # 构建API URL
-        url = f"{base_url}/{city}/{today}?unitGroup=metric&key={api_key}&contentType=json"
+        url = f"{base_url}/{city}/{start_date_str}/{end_date_str}?unitGroup=metric&key={api_key}&contentType=json"
         print(f"正在请求URL: {url}")
         
         # 发送请求
@@ -39,20 +44,23 @@ def get_weather_data(city):
         data = response.json()
         
         # 提取所需的天气信息
-        weather_data = {
-            'city': city.split(',')[0],
-            'date': today,
-            'temp_max': data['days'][0]['tempmax'],
-            'temp_min': data['days'][0]['tempmin'],
-            'temp_avg': data['days'][0]['temp'],
-            'humidity': data['days'][0]['humidity'],
-            'precipitation': data['days'][0].get('precip', 0),
-            'wind_speed': data['days'][0]['windspeed'],
-            'conditions': data['days'][0]['conditions']
-        }
+        weather_data_list = []
+        for day in data['days']:
+            weather_data = {
+                'city': city.split(',')[0],
+                'date': day['datetime'],
+                'temp_max': day['tempmax'],
+                'temp_min': day['tempmin'],
+                'temp_avg': day['temp'],
+                'humidity': day['humidity'],
+                'precipitation': day.get('precip', 0),
+                'wind_speed': day['windspeed'],
+                'conditions': day['conditions']
+            }
+            weather_data_list.append(weather_data)
         
         print(f"成功获取{city}的天气数据")
-        return weather_data
+        return weather_data_list
     
     except Exception as e:
         print(f"获取{city}天气数据时出错: {str(e)}")
@@ -69,6 +77,9 @@ def save_to_csv(df, filename='canada_weather.csv'):
             # 合并数据并删除重复项（基于城市和日期）
             df = pd.concat([existing_df, df]).drop_duplicates(subset=['city', 'date'], keep='last')
         
+        # 按城市和日期排序
+        df = df.sort_values(['city', 'date'])
+        
         # 保存到CSV
         df.to_csv(file_path, index=False)
         print(f"\n数据已保存到: {file_path}")
@@ -78,16 +89,16 @@ def save_to_csv(df, filename='canada_weather.csv'):
 
 def main():
     # 获取所有城市的天气数据
-    weather_data_list = []
+    all_weather_data = []
     for city in CITIES:
         print(f"\n获取{city}的天气数据...")
-        data = get_weather_data(city)
-        if data:
-            weather_data_list.append(data)
+        data_list = get_weather_data(city)
+        if data_list:
+            all_weather_data.extend(data_list)
     
     # 如果有数据，创建DataFrame并保存到CSV
-    if weather_data_list:
-        df = pd.DataFrame(weather_data_list)
+    if all_weather_data:
+        df = pd.DataFrame(all_weather_data)
         print("\n获取到的天气数据:")
         print(df)
         save_to_csv(df)
