@@ -1,0 +1,4 @@
+service-account-key.json
+test_bigquery.py
+__pycache__/
+*.pyc
