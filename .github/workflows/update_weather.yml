@@ -27,6 +27,8 @@ jobs:
         pip install pandas requests
     
     - name: Run weather update script
+      env:
+        WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY }}
       run: python canada_weather.py
     
     - name: Commit changes
