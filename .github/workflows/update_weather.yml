@@ -13,6 +13,8 @@ jobs:
     
     steps:
     - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
     
     - uses: actions/setup-python@v4
       with:
@@ -31,5 +33,6 @@ jobs:
       run: |
         git config --global user.name github-actions
         git config --global user.email github-actions@github.com
+        git pull origin main --rebase
         git add canada_weather.csv
         git diff --quiet && git diff --staged --quiet || (git commit -m "Update weather data" && git push)
