@@ -2,6 +2,11 @@ import pandas as pd
 import requests
 from datetime import datetime, timedelta
 import os
+from supabase import create_client
+
+# Supabase configuration
+SUPABASE_URL = os.getenv('SUPABASE_URL', 'https://mrmlhepxjdsxcvvyyolb.supabase.co')
+SUPABASE_KEY = os.getenv('SUPABASE_KEY', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ybWxoZXB4amRzeGN2dnl5b2xiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDAwMjY1NTksImV4cCI6MjA1NTYwMjU1OX0.VdNbtsms1rsHerXmJT42Y6wD9V6QQtyPIoKpJaFHucs')
 
 # 加拿大主要城市列表
 CITIES = [
@@ -87,6 +92,28 @@ def save_to_csv(df, filename='canada_weather.csv'):
     except Exception as e:
         print(f"保存CSV文件时出错: {str(e)}")
 
+def save_to_supabase(df):
+    """保存数据到Supabase"""
+    try:
+        # 创建Supabase客户端
+        supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+        
+        # 将DataFrame转换为字典列表
+        records = df.to_dict('records')
+        
+        # 使用upsert来更新或插入数据
+        result = supabase.table('weather_data').upsert(
+            records,
+            on_conflict=['city', 'date']  # 基于城市和日期的唯一约束
+        ).execute()
+        
+        print(f"\n数据已成功保存到Supabase")
+        return True
+        
+    except Exception as e:
+        print(f"保存到Supabase时出错: {str(e)}")
+        return False
+
 def main():
     # 获取所有城市的天气数据
     all_weather_data = []
@@ -96,12 +123,20 @@ def main():
         if data_list:
             all_weather_data.extend(data_list)
     
-    # 如果有数据，创建DataFrame并保存到CSV
+    # 如果有数据，创建DataFrame并保存
     if all_weather_data:
         df = pd.DataFrame(all_weather_data)
         print("\n获取到的天气数据:")
         print(df)
+        
+        # 保存到CSV
         save_to_csv(df)
+        
+        # 保存到Supabase
+        if SUPABASE_URL != "YOUR_SUPABASE_URL" and SUPABASE_KEY != "YOUR_SUPABASE_KEY":
+            save_to_supabase(df)
+        else:
+            print("\n请设置Supabase的URL和Key以启用数据库存储")
     else:
         print("没有获取到任何天气数据")
 
