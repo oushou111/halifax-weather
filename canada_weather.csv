@@ -1,6 +1,6 @@
 city,date,temperature,humidity,wind_speed,description,pressure
-Toronto,2025-02-21,-7.6,62,20.5,Overcast,1023.0
-Montreal,2025-02-21,-6.6,62,10.8,Overcast,1015.0
-Vancouver,2025-02-21,7.2,81,9.7,Sunny,1027.0
-Calgary,2025-02-21,5.1,61,4.3,Overcast,1015.0
-Halifax,2025-02-21,-2.2,85,3.6,Clear,1006.0
+Toronto,2025-02-21,-8.8,73,16.9,Partly cloudy,1024.0
+Montreal,2025-02-21,-8.7,85,12.2,Light snow,1016.0
+Vancouver,2025-02-21,7.0,100,10.4,Light rain,1027.0
+Calgary,2025-02-21,-4.7,78,10.4,Partly Cloudy,1022.0
+Halifax,2025-02-21,-2.4,86,14.0,Clear,1000.0
