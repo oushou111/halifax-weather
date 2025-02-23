@@ -2,14 +2,12 @@ name: Daily Weather Update
 
 on:
   schedule:
-    - cron: '0 */6 * * *'  # 每6小时运行一次
+    - cron: '0 0 * * *'  # 每天午夜12点运行一次
   workflow_dispatch:  # 允许手动触发
 
 jobs:
   update-weather:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write  # 添加写入权限
     
     steps:
     - name: Checkout repository
@@ -23,21 +21,15 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install pandas requests
+        pip install pandas requests google-cloud-bigquery pandas-gbq
+    
+    - name: Setup Google Cloud Auth
+      uses: google-github-actions/auth@v1
+      with:
+        credentials_json: ${{ secrets.GOOGLE_CREDENTIALS }}
     
     - name: Run weather update script
       env:
         WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY }}
       run: |
         python canada_weather.py
-    
-    - name: Configure Git
-      run: |
-        git config --global user.name 'github-actions[bot]'
-        git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-    
-    - name: Commit and push if changed
-      run: |
-        git add canada_weather.csv
-        git diff --staged --quiet || git commit -m "Update weather data"
-        git push
