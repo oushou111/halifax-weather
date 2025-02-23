@@ -4,7 +4,7 @@ from datetime import datetime
 import pandas as pd
 from google.cloud import bigquery
 from google.api_core import exceptions
-import service_account
+from google.oauth2 import service_account
 
 # List of major Canadian cities
 CITIES = [
